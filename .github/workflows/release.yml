@@ -34,34 +34,15 @@ jobs:
       - name: Make Gradle Wrapper Executable
         run: chmod +x ./gradlew
 
-      - name: Execute Gradle build
+      - name: Build
         run: ./gradlew build
 
-      - name: Find jar files
-        run: find . -name "*.jar" -type f -not -path "*/\.gradle/*" | head -20
-
-      - name: Get date
-        id: date
-        run: echo "DATE=$(date +'%m/%d')" >> $GITHUB_OUTPUT
-
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-
-      - name: Get existing releases count
-        id: count
-        run: |
-          COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases" \
-            | grep -c "\"tag_name\":\"${{ github.ref_name }}\"" || echo "0")
-          echo "COUNT=$COUNT" >> $GITHUB_OUTPUT
-
-      - name: Create Release and Upload Assets
+      - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "**/build/libs/*.jar,**/build/*.jar"
+          artifacts: "**/build/libs/*.jar"
           tag: ${{ github.ref_name }}
-          name: ${{ steps.date.outputs.DATE }} ${{ steps.version.outputs.VERSION }}_${{ steps.count.outputs.COUNT }}
+          name: $(date +'%m/%d') ${GITHUB_REF_NAME#v}_$(gh api repos/${{ github.repository }}/releases --jq '[.[] | select(.tag_name == "${{ github.ref_name }}")] | length')
           draft: false
           prerelease: false
           generateReleaseNotes: true
