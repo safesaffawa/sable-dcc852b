@@ -1,4 +1,4 @@
-name: Release
+name: Build
 
 on:
   workflow_dispatch:
@@ -37,14 +37,10 @@ jobs:
       - name: Build
         run: ./gradlew build
 
-      - name: Create Release
-        uses: ncipollo/release-action@v1
+      - name: Upload JAR artifacts
+        uses: actions/upload-artifact@v4
         with:
-          artifacts: "**/build/libs/*.jar"
-          tag: ${{ github.ref_name }}
-          name: $(date +'%m/%d') ${GITHUB_REF_NAME#v}_$(gh api repos/${{ github.repository }}/releases --jq '[.[] | select(.tag_name == "${{ github.ref_name }}")] | length')
-          draft: false
-          prerelease: false
-          generateReleaseNotes: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-          allowUpdates: true
+          name: jar-files
+          path: "**/build/libs/*.jar"
+          if-no-files-found: error
+          retention-days: 7
